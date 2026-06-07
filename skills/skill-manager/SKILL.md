@@ -17,13 +17,32 @@ Natural language: "install skills from X", "add skills from X", "update my skill
 
 ## On Every Invocation
 
-Before any other action, run the update check:
+First, locate the companion scripts. The install path varies by platform, so search all known locations:
 
 ```bash
-bash ~/.agents/skills/skill-manager/scripts/check-updates.sh
+for _dir in \
+  "$HOME/.claude/skills/skill-manager/scripts" \
+  "$HOME/.config/goose/skills/skill-manager/scripts" \
+  "$HOME/.cursor/skills/skill-manager/scripts" \
+  "$HOME/.gemini/skills/skill-manager/scripts" \
+  "$HOME/.codeium/windsurf/skills/skill-manager/scripts" \
+  "$HOME/.continue/skills/skill-manager/scripts" \
+  "$HOME/.agents/skills/skill-manager/scripts" \
+  "$HOME/.warp/skills/skill-manager/scripts"; do
+  [ -d "$_dir" ] && SKILL_SCRIPTS="$_dir" && break
+done
+unset _dir
 ```
 
-If it produces output, surface it to the user. If it fails or exits non-zero, show a brief warning ("could not check for updates — continuing") and proceed with the requested operation regardless.
+If `SKILL_SCRIPTS` is still unset after this loop, warn the user: "skill-manager scripts not found — the skill may not be installed correctly" and stop.
+
+Then run the update check:
+
+```bash
+bash "$SKILL_SCRIPTS/check-updates.sh"
+```
+
+If it produces output, surface it to the user. If it fails or exits non-zero, show a brief warning ("could not check for updates — continuing") and proceed regardless.
 
 ---
 
@@ -32,7 +51,7 @@ If it produces output, surface it to the user. If it fails or exits non-zero, sh
 ### Step 1: Detect Current Platform
 
 ```bash
-PLATFORM=$(bash ~/.agents/skills/skill-manager/scripts/detect-platform.sh)
+PLATFORM=$(bash "$SKILL_SCRIPTS/detect-platform.sh")
 ```
 
 Confirm with the user: "I detected you're running on **$PLATFORM**. Is that correct?"
@@ -95,7 +114,7 @@ Show the install section to the user and ask how to proceed.
 ### Step 3: Check If Already Registered
 
 ```bash
-ENTRIES=$(bash ~/.agents/skills/skill-manager/scripts/registry.sh read)
+ENTRIES=$(bash "$SKILL_SCRIPTS/registry.sh" read)
 ```
 
 If an entry with matching `repo` exists in the JSON array, show the currently installed skills and ask: "Would you like to add more skills or reinstall existing ones?" Adjust the remaining steps accordingly.
@@ -148,7 +167,7 @@ Set shell variables for all substitutions before building the JSON:
 TODAY=$(date +%Y-%m-%d)
 SHA=$(gh api "repos/{owner}/{repo}/commits/HEAD" --jq '.sha')
 INSTALL_TOOL="gh"          # or "npx" or "manual"
-INSTALL_CMD="gh skill install {owner}/{repo} {skill-name} --scope user"
+INSTALL_CMD="gh skill install {owner}/{repo} {skill-name} --agent {platform} --scope user"
 # JSON array of installed skill names, e.g. '["brainstorming","cli"]'
 SKILLS_JSON='["{skill-name-1}","{skill-name-2}"]'
 
@@ -163,7 +182,7 @@ print(json.dumps({
     'installed_at': sys.argv[6]
 }))" "{owner}/{repo}" "$INSTALL_TOOL" "$INSTALL_CMD" "$SKILLS_JSON" "$SHA" "$TODAY")
 
-bash ~/.agents/skills/skill-manager/scripts/registry.sh write "$ENTRY"
+bash "$SKILL_SCRIPTS/registry.sh" write "$ENTRY"
 ```
 
 ---
@@ -173,7 +192,7 @@ bash ~/.agents/skills/skill-manager/scripts/registry.sh write "$ENTRY"
 ### Step 1: Run Update Check
 
 ```bash
-bash ~/.agents/skills/skill-manager/scripts/check-updates.sh
+bash "$SKILL_SCRIPTS/check-updates.sh"
 ```
 
 The script covers all three paths:
@@ -192,7 +211,7 @@ Otherwise ask: "Update all, pick specific ones, or skip?"
 gh skill update {skill-name} --agent {platform}
 ```
 
-**`npx`-managed:** Try `npx skills update {skill-name}` first. If unavailable, re-run the recorded `install_cmd`. If `install_cmd` is not recorded, ask the user: "I don't have a recorded install command for {skill-name}. Can you provide it, or should I try `npx skills add {repo} --skill {skill-name} -a universal -y`?"
+**`npx`-managed:** Try `npx skills update {skill-name}` first. If unavailable, re-run the recorded `install_cmd`. If `install_cmd` is not recorded, ask the user: "I don't have a recorded install command for {skill-name}. Can you provide it, or should I try `npx skills add {repo} --skill {skill-name} -a {platform} -y`?"
 
 **`manual`:** Show the recorded `install_cmd` and the latest release if accessible:
 ```bash
@@ -208,7 +227,7 @@ After a successful update, refresh the SHA so future checks work correctly:
 SHA=$(gh api "repos/{owner}/{repo}/commits/HEAD" --jq '.sha')
 PATCH=$(python3 -c "import json,sys; print(json.dumps({'repo': sys.argv[1], 'sha': sys.argv[2]}))" \
   "{owner}/{repo}" "$SHA")
-bash ~/.agents/skills/skill-manager/scripts/registry.sh write "$PATCH"
+bash "$SKILL_SCRIPTS/registry.sh" write "$PATCH"
 ```
 
 ### Step 4: Retroactive Registration (if unregistered skills reported)
@@ -234,5 +253,5 @@ print(json.dumps({
     'sha': sys.argv[5],
     'installed_at': sys.argv[6]
 }))" "{owner}/{repo}" "{tool}" "$INSTALL_CMD" "{skill-name}" "$SHA" "$TODAY")
-bash ~/.agents/skills/skill-manager/scripts/registry.sh write "$ENTRY"
+bash "$SKILL_SCRIPTS/registry.sh" write "$ENTRY"
 ```
