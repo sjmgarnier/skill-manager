@@ -5,7 +5,7 @@ A [`SKILL.md`](https://agentskills.io/specification) agent skill for installing 
 ## Install
 
 ```bash
-gh skill install <owner>/skill-manager skill-manager --scope user
+gh skill install sjmgarnier/skill-manager skill-manager --scope user
 ```
 
 ## Requirements
