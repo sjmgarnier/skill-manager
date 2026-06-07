@@ -37,12 +37,12 @@ fi
 # 3. Config directories — created on first install and persist permanently.
 #    May produce false positives on machines where a platform was installed
 #    but is not currently active (e.g. ~/.claude exists even in Gemini CLI).
-[[ -d "${HOME}/.claude" ]]    && echo "claude-code" && exit 0
-[[ -d "${HOME}/.gemini" ]]    && echo "gemini-cli"  && exit 0
-[[ -d "${HOME}/.cursor" ]]    && echo "cursor"       && exit 0
-[[ -d "${HOME}/.warp" ]]      && echo "warp"         && exit 0
-[[ -d "${HOME}/.windsurf" ]]  && echo "windsurf"     && exit 0
-[[ -d "${HOME}/.continue" ]]  && echo "continue"     && exit 0
-[[ -d "${HOME}/.goose" ]]     && echo "goose"        && exit 0
+[[ -d "${HOME}/.claude" ]]          && echo "claude-code" && exit 0
+[[ -d "${HOME}/.gemini" ]]          && echo "gemini-cli"  && exit 0
+[[ -d "${HOME}/.cursor" ]]          && echo "cursor"       && exit 0
+[[ -d "${HOME}/.warp" ]]            && echo "warp"         && exit 0
+[[ -d "${HOME}/.windsurf" ]]        && echo "windsurf"     && exit 0
+[[ -d "${HOME}/.continue" ]]        && echo "continue"     && exit 0
+[[ -d "${HOME}/.config/goose" ]]    && echo "goose"        && exit 0
 
 echo "unknown"

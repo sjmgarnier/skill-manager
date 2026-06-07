@@ -37,7 +37,21 @@ PLATFORM=$(bash ~/.agents/skills/skill-manager/scripts/detect-platform.sh)
 
 Confirm with the user: "I detected you're running on **$PLATFORM**. Is that correct?"
 
-Ask: "Would you like to install for additional platforms too?"
+The `$PLATFORM` value maps directly to the `--agent` flag used by `gh skill install`:
+
+| Detected platform | `--agent` value |
+|---|---|
+| `claude-code` | `claude-code` |
+| `gemini-cli` | `gemini-cli` |
+| `goose` | `goose` |
+| `codex` | `codex` |
+| `cursor` | `cursor` |
+| `warp` | `warp` |
+| `windsurf` | `windsurf` |
+| `continue` | `continue` |
+| `unknown` | ask the user — run `gh skill install --help` and show the supported agent list |
+
+Ask: "Would you like to install for additional platforms too?" If yes, collect all target platforms before proceeding.
 
 ### Step 2: Inspect the Repo
 
@@ -96,26 +110,28 @@ List the discovered skills and ask: "Install all, or pick specific ones?"
 
 ### Step 5: Run the Install
 
-**`gh skill` — one skill at a time:**
+Use the `$PLATFORM` value from Step 1 as the `--agent` argument. Install once per target platform (loop if the user requested multiple).
+
+**`gh skill` — one skill:**
 ```bash
-gh skill install {owner}/{repo} {skill-name} --scope user
+gh skill install {owner}/{repo} {skill-name} --agent {platform} --scope user
 ```
 
 **`gh skill` — all skills (loop over each name):**
 ```bash
 for SKILL in {skill-name-1} {skill-name-2} ...; do
-  gh skill install {owner}/{repo} "$SKILL" --scope user
+  gh skill install {owner}/{repo} "$SKILL" --agent {platform} --scope user
 done
 ```
 
-**`npx skills` — specific skills:**
+**`npx skills` — specific skill:**
 ```bash
-npx skills add {owner}/{repo} --skill {skill-name} -a universal -y
+npx skills add {owner}/{repo} --skill {skill-name} -a {platform} -y
 ```
 
 **`npx skills` — all skills:**
 ```bash
-npx skills add {owner}/{repo} --all -a universal -y
+npx skills add {owner}/{repo} --all -a {platform} -y
 ```
 
 For platform-native installs: run or surface the command from the instruction file. Do not write a registry entry for platform-native installs.
@@ -173,7 +189,7 @@ Otherwise ask: "Update all, pick specific ones, or skip?"
 
 **`gh`-managed:**
 ```bash
-gh skill update {skill-name}
+gh skill update {skill-name} --agent {platform}
 ```
 
 **`npx`-managed:** Try `npx skills update {skill-name}` first. If unavailable, re-run the recorded `install_cmd`. If `install_cmd` is not recorded, ask the user: "I don't have a recorded install command for {skill-name}. Can you provide it, or should I try `npx skills add {repo} --skill {skill-name} -a universal -y`?"
