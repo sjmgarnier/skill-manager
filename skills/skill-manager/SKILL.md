@@ -149,13 +149,15 @@ done
 
 **`npx skills` — specific skill:**
 ```bash
-npx skills add {owner}/{repo} --skill {skill-name} -a {platform} -y
+npx skills add {owner}/{repo} --skill {skill-name} --agent {platform} -g -y
 ```
 
-**`npx skills` — all skills:**
+**`npx skills` — all skills from repo:**
 ```bash
-npx skills add {owner}/{repo} --all -a {platform} -y
+npx skills add {owner}/{repo} --agent {platform} -g -y
 ```
+
+Use `--agent {platform}` and `-g` (global/user scope). Do NOT combine `--agent` with `--all` — the `--all` flag means "install to all agents" and overrides `--agent`, causing installs to unintended locations.
 
 For platform-native installs: run or surface the command from the instruction file. Do not write a registry entry for platform-native installs.
 
@@ -172,6 +174,7 @@ TODAY=$(date +%Y-%m-%d)
 SHA=$(gh api "repos/{owner}/{repo}/commits/HEAD" --jq '.sha')
 INSTALL_TOOL="gh"          # or "npx" or "manual"
 INSTALL_CMD="gh skill install {owner}/{repo} {skill-name} --agent {platform} --scope user"
+# For npx-installed skills use: "npx skills add {owner}/{repo} --agent {platform} -g -y"
 # JSON array of installed skill names, e.g. '["brainstorming","cli"]'
 SKILLS_JSON='["{skill-name-1}","{skill-name-2}"]'
 
@@ -215,7 +218,7 @@ Otherwise ask: "Update all, pick specific ones, or skip?"
 gh skill update {skill-name} --agent {platform}
 ```
 
-**`npx`-managed:** Try `npx skills update {skill-name}` first. If unavailable, re-run the recorded `install_cmd`. If `install_cmd` is not recorded, ask the user: "I don't have a recorded install command for {skill-name}. Can you provide it, or should I try `npx skills add {repo} --skill {skill-name} -a {platform} -y`?"
+**`npx`-managed:** Re-run the recorded `install_cmd`. If `install_cmd` is not recorded, ask the user: "I don't have a recorded install command for {skill-name}. Can you provide it, or should I try `npx skills add {repo} --skill {skill-name} --agent {platform} -g -y`?"
 
 **`manual`:** Show the recorded `install_cmd` and the latest release if accessible:
 ```bash
