@@ -39,17 +39,17 @@ Confirm with the user: "I detected you're running on **$PLATFORM**. Is that corr
 
 The `$PLATFORM` value maps directly to the `--agent` flag used by `gh skill install`:
 
-| Detected platform | `--agent` value |
-|---|---|
-| `claude-code` | `claude-code` |
-| `gemini-cli` | `gemini-cli` |
-| `goose` | `goose` |
-| `codex` | `codex` |
-| `cursor` | `cursor` |
-| `warp` | `warp` |
-| `windsurf` | `windsurf` |
-| `continue` | `continue` |
-| `unknown` | ask the user — run `gh skill install --help` and show the supported agent list |
+| Detected platform | `--agent` value | Installs to (user scope) |
+|---|---|---|
+| `claude-code` | `claude-code` | `~/.claude/skills/` |
+| `gemini-cli` | `gemini-cli` | `~/.gemini/skills/` |
+| `goose` | `goose` | `~/.config/goose/skills/` |
+| `codex` | `codex` | `~/.codex/skills/` |
+| `cursor` | `cursor` | `~/.cursor/skills/` |
+| `warp` | `warp` | `~/.agents/skills/` (shared dir) |
+| `windsurf` | `windsurf` | `~/.codeium/windsurf/skills/` |
+| `continue` | `continue` | `~/.continue/skills/` |
+| `unknown` | ask the user — run `gh skill install --help` and show the supported agent list | varies |
 
 Ask: "Would you like to install for additional platforms too?" If yes, collect all target platforms before proceeding.
 
