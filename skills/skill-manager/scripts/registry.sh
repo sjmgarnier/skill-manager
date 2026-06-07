@@ -6,6 +6,11 @@ SKILLS_DIR="${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}"
 CMD="${1:-}"
 ARG="${2:-}"
 
+if [[ -z "$CMD" ]]; then
+  echo "registry.sh: command required (read|write|list-unregistered)" >&2
+  exit 1
+fi
+
 python3 - "$CMD" "$ARG" "$REGISTRY" "$SKILLS_DIR" << 'PYEOF'
 import sys, os, json
 
@@ -15,7 +20,6 @@ registry_file = sys.argv[3]
 skills_dir = sys.argv[4]
 
 # Registry is stored as JSON (a strict subset of YAML) for stdlib compatibility.
-# A leading comment line is stripped on read and re-added on write.
 HEADER = "# Managed by skill-manager. Edit with care.\n"
 
 def load_registry():
@@ -23,23 +27,52 @@ def load_registry():
         return {"entries": []}
     with open(registry_file) as f:
         content = f.read()
-    # Strip leading comment lines before JSON parsing
-    lines = [l for l in content.splitlines() if not l.startswith("#")]
-    return json.loads("\n".join(lines)) if any(l.strip() for l in lines) else {"entries": []}
+    # Strip only the known header line, not arbitrary lines starting with #
+    if content.startswith("# Managed by skill-manager"):
+        newline = content.find("\n")
+        content = content[newline + 1:] if newline != -1 else ""
+    if not content.strip():
+        return {"entries": []}
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError as e:
+        print(f"registry: could not parse {registry_file}: {e}", file=sys.stderr)
+        sys.exit(1)
 
 def save_registry(data):
-    os.makedirs(os.path.dirname(registry_file), exist_ok=True)
+    parent = os.path.dirname(registry_file)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
     with open(registry_file, "w") as f:
         f.write(HEADER)
         json.dump(data, f, indent=2)
         f.write("\n")
+
+def frontmatter_has_gh_metadata(path):
+    """Check only the YAML frontmatter block for the github-repo: key."""
+    try:
+        with open(path) as f:
+            content = f.read()
+    except OSError:
+        return False
+    if not content.startswith("---"):
+        return False
+    end = content.find("---", 3)
+    if end == -1:
+        return False
+    frontmatter = content[3:end]
+    return "github-repo:" in frontmatter
 
 if cmd == "read":
     data = load_registry()
     print(json.dumps(data.get("entries", [])))
 
 elif cmd == "write":
-    new_entry = json.loads(arg)
+    try:
+        new_entry = json.loads(arg)
+    except json.JSONDecodeError as e:
+        print(f"registry write: invalid JSON: {e}", file=sys.stderr)
+        sys.exit(1)
     data = load_registry()
     entries = data.get("entries", [])
     updated = False
@@ -66,10 +99,11 @@ elif cmd == "list-unregistered":
             continue
         if item in registered:
             continue
-        skill_md = os.path.join(path, "SKILL.md")
-        if os.path.exists(skill_md):
-            with open(skill_md) as f:
-                if "github-repo:" in f.read():
-                    continue
+        if frontmatter_has_gh_metadata(os.path.join(path, "SKILL.md")):
+            continue
         print(item)
+
+else:
+    print(f"registry: unknown command: {cmd!r} (expected read|write|list-unregistered)", file=sys.stderr)
+    sys.exit(1)
 PYEOF
