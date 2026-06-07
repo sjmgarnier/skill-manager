@@ -15,17 +15,25 @@ SCRIPT="$BATS_TEST_DIRNAME/../skills/skill-manager/scripts/detect-platform.sh"
 
 @test "detects claude-code from ~/.claude config dir" {
   TMPHOME=$(mktemp -d)
+  MOCKBIN=$(mktemp -d)
   mkdir -p "$TMPHOME/.claude"
-  run env HOME="$TMPHOME" bash "$SCRIPT"
-  rm -rf "$TMPHOME"
+  # Stub ps to return nothing so only the directory tier is tested
+  printf '#!/bin/bash\necho ""\n' > "$MOCKBIN/ps"
+  chmod +x "$MOCKBIN/ps"
+  run env HOME="$TMPHOME" PATH="$MOCKBIN:$PATH" bash "$SCRIPT"
+  rm -rf "$TMPHOME" "$MOCKBIN"
   [ "$output" = "claude-code" ]
 }
 
 @test "detects gemini-cli from ~/.gemini config dir" {
   TMPHOME=$(mktemp -d)
+  MOCKBIN=$(mktemp -d)
   mkdir -p "$TMPHOME/.gemini"
-  run env HOME="$TMPHOME" bash "$SCRIPT"
-  rm -rf "$TMPHOME"
+  # Stub ps to return nothing so only the directory tier is tested
+  printf '#!/bin/bash\necho ""\n' > "$MOCKBIN/ps"
+  chmod +x "$MOCKBIN/ps"
+  run env HOME="$TMPHOME" PATH="$MOCKBIN:$PATH" bash "$SCRIPT"
+  rm -rf "$TMPHOME" "$MOCKBIN"
   [ "$output" = "gemini-cli" ]
 }
 
@@ -38,4 +46,17 @@ SCRIPT="$BATS_TEST_DIRNAME/../skills/skill-manager/scripts/detect-platform.sh"
   run env -i PATH="$MOCKBIN:$PATH" HOME="$TMPHOME" bash "$SCRIPT"
   rm -rf "$TMPHOME" "$MOCKBIN"
   [ "$output" = "unknown" ]
+}
+
+@test "process check takes priority over config dir (detects active platform)" {
+  # ~/.gemini exists (old install) but a claude-code process is running
+  TMPHOME=$(mktemp -d)
+  MOCKBIN=$(mktemp -d)
+  mkdir -p "$TMPHOME/.gemini"
+  # Stub ps to report a claude process
+  printf '#!/bin/bash\necho "claude"\n' > "$MOCKBIN/ps"
+  chmod +x "$MOCKBIN/ps"
+  run env -i PATH="$MOCKBIN:$PATH" HOME="$TMPHOME" bash "$SCRIPT"
+  rm -rf "$TMPHOME" "$MOCKBIN"
+  [ "$output" = "claude-code" ]
 }

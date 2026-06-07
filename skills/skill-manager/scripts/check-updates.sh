@@ -5,10 +5,14 @@ set -euo pipefail
 SCRIPTS_DIR="$(python3 -c "import os,sys; print(os.path.dirname(os.path.realpath(sys.argv[1])))" "$0")"
 
 python3 - "$SCRIPTS_DIR" << 'PYEOF'
-import subprocess, sys, os, json
+import subprocess, sys, os, json, shutil
 
 scripts_dir = sys.argv[1]
 registry_sh = os.path.join(scripts_dir, "registry.sh")
+
+gh_available = shutil.which("gh") is not None
+if not gh_available:
+    print("warning: gh not found — update checks that require GitHub CLI will be skipped", file=sys.stderr)
 
 def run(args, suppress_stderr=False):
     """Run a command (list form, no shell injection). Returns stdout or '' on failure."""

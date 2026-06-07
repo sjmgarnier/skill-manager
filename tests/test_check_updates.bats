@@ -21,8 +21,13 @@ make_mock_gh() {
 #!/usr/bin/env bash
 if [[ "\$*" == *"--dry-run"* ]]; then
   echo "$dry_run_output"
-elif [[ "\$*" == *"commits/HEAD"* ]]; then
+elif [[ "\$*" == *"commits/HEAD"* ]] && [[ "\$*" == *"--jq"* ]]; then
+  # Simulate gh api ... --jq '.sha' returning just the SHA string
   echo "$head_sha"
+elif [[ "\$*" == *"commits/HEAD"* ]]; then
+  # No --jq: return raw JSON as real gh would — catches regressions if
+  # --jq is accidentally removed from check-updates.sh
+  echo '{"sha":"$head_sha","commit":{"message":"test commit"}}'
 fi
 MOCK
   chmod +x "$MOCKBIN/gh"

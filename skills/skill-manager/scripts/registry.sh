@@ -88,7 +88,9 @@ elif cmd == "write":
 
 elif cmd == "list-unregistered":
     data = load_registry()
-    registered = {s for e in data.get("entries", []) for s in e.get("skills_installed", [])}
+    # Normalize to lowercase for case-insensitive comparison (macOS APFS is
+    # case-insensitive; skills_installed values must match directory names).
+    registered = {s.lower() for e in data.get("entries", []) for s in e.get("skills_installed", [])}
     if not os.path.isdir(skills_dir):
         sys.exit(0)
     for item in sorted(os.listdir(skills_dir)):
@@ -97,7 +99,7 @@ elif cmd == "list-unregistered":
         path = os.path.join(skills_dir, item)
         if not os.path.isdir(path):
             continue
-        if item in registered:
+        if item.lower() in registered:
             continue
         if frontmatter_has_gh_metadata(os.path.join(path, "SKILL.md")):
             continue
