@@ -98,9 +98,13 @@ Show the file contents to the user and ask: "This repo includes platform-specifi
 
 Execute whatever commands the file specifies if the user agrees. The user may choose platform-native install, `~/.agents/skills/` install, or both.
 
-**b. `skills/*/SKILL.md` or `skills/*/*/SKILL.md` paths present in $TREE** → use `gh skill install`
+**b. `skills/*/SKILL.md` paths present (single-level layout)** → use `gh skill install`
 
-**c. `.claude-plugin/marketplace.json` or similar present in $TREE** → use `npx skills add`
+`gh skill install` only handles the single-level layout (`skills/<name>/SKILL.md`). If the tree contains paths matching `skills/*/*/SKILL.md` (category/name layout, e.g. `skills/github/pr-create/SKILL.md`) but no single-level paths, `gh skill install` cannot reach those skills — skip to signal **c** instead.
+
+**c. `.claude-plugin/marketplace.json`, `skills/*/*/SKILL.md`, or similar present in $TREE** → use `npx skills add`
+
+`npx skills add` handles both single-level and category/name layouts and supports `marketplace.json`-based repos. Prefer it whenever the repo uses nested skill directories.
 
 **d. `README.md` present** → fetch it with:
 ```bash
