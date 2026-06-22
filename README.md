@@ -5,8 +5,11 @@ A [`SKILL.md`](https://agentskills.io/specification) agent skill for installing 
 ## Install
 
 ```bash
-gh skill install sjmgarnier/skill-manager skill-manager --scope user
+gh skill install sjmgarnier/skill-manager skill-manager --agent codex --scope user
 ```
+
+Replace `codex` with your target agent, such as `claude-code`, `goose`,
+`gemini-cli`, `cursor`, `warp`, `windsurf`, or `continue`.
 
 ## Requirements
 
